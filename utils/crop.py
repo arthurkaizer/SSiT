@@ -28,12 +28,12 @@ def main():
     for root, _, imgs in os.walk(args.image_folder):
         root = Path(root)
         subfolders = root.relative_to(image_folder)
-        output_folder = output_folder.joinpath(subfolders)
-        output_folder.mkdir(parents=True, exist_ok=True)
+        output_subfolder = output_folder.joinpath(subfolders)
+        output_subfolder.mkdir(parents=True, exist_ok=True)
 
         for img in tqdm(imgs):
             src_path = root.joinpath(img)
-            tgt_path = output_folder.joinpath(img)
+            tgt_path = output_subfolder.joinpath(img)
             jobs.append((src_path, tgt_path, args.crop_size))
     random.shuffle(jobs)
 
@@ -90,7 +90,7 @@ def convert(fname, tgt_path, crop_size):
         bbox = square_bbox(img)
 
     cropped = img.crop(bbox)
-    cropped = cropped.resize([crop_size, crop_size], Image.ANTIALIAS)
+    cropped = cropped.resize([crop_size, crop_size], Image.LANCZOS)
     save(cropped, tgt_path)
 
 

@@ -73,18 +73,18 @@ def train(args, model, train_dataset, logger=None, scaler=None):
                 if not args.disable_progress:
                     progress.set_description(message)
 
-        if is_main(args) and args.disable_progress:
-            print(message)
+                if is_main(args) and args.disable_progress:
+                    print(message)
 
-        if is_main(args) and (epoch + 1) % args.save_interval == 0 and (epoch + 1) < args.epochs:
-            save_checkpoint(args, epoch, model, optimizer, scaler)
+                if is_main(args) and (epoch + 1) % args.save_interval == 0 and (epoch + 1) < args.epochs:
+                    save_checkpoint(args, epoch, model, optimizer, scaler)
 
-        # record
-        if is_main(args) and logger:
-            logger.add_scalar('contrastive loss', avg_cl_loss, epoch)
-            logger.add_scalar('saliency segmentation loss', avg_ss_loss, epoch)
-            logger.add_scalar('learning rate', lr, epoch)
-            logger.add_scalar('moco momentum', moco_m, epoch)
+                # record
+                if is_main(args) and logger:
+                    logger.add_scalar('contrastive loss', avg_cl_loss, epoch)
+                    logger.add_scalar('saliency segmentation loss', avg_ss_loss, epoch)
+                    logger.add_scalar('learning rate', lr, epoch)
+                    logger.add_scalar('moco momentum', moco_m, epoch)
 
     # save final model
     if is_main(args):
