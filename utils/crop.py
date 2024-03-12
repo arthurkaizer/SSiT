@@ -17,6 +17,7 @@ parser.add_argument('--image-folder', type=str, help='path to image folder')
 parser.add_argument('--output-folder', type=str, help='path to output folder')
 parser.add_argument('--crop-size', type=int, default=512, help='crop size of image')
 parser.add_argument('-n', '--num-processes', type=int, default=8, help='number of processes to use')
+parser.add_argument('--resume', action='store_true', help='resume processing from last checkpoint')
 
 
 def main():
@@ -37,6 +38,15 @@ def main():
             jobs.append((src_path, tgt_path, args.crop_size))
     random.shuffle(jobs)
 
+    # Check if resume flag is set
+    if args.resume:
+        processed_jobs = set()
+        with open('processed_jobs.txt', 'r') as f:
+            for line in f:
+                processed_jobs.add(line.strip())
+
+        jobs = [job for job in jobs if job[0].name not in processed_jobs]
+
     procs = []
     job_size = len(jobs) // args.num_processes
     for i in range(args.num_processes):
@@ -51,12 +61,17 @@ def main():
     for p in procs:
         p.join()
 
+    print("Processamento concluído!")
+
 
 def convert_list(i, jobs):
     for j, job in enumerate(jobs):
         if j % 100 == 0:
-            print('worker{} has finished {}.'.format(i, j))
+            print(f'worker{i} has finished {j}.')
+
         convert(*job)
+        with open('processed_jobs.txt', 'a') as f:
+            f.write(f"{job[0].name}\n")
 
 
 def convert(fname, tgt_path, crop_size):
@@ -75,13 +90,13 @@ def convert(fname, tgt_path, crop_size):
         bbox = Image.fromarray(foreground).getbbox()
 
         if bbox is None:
-            print('bbox none for {} (???)'.format(fname))
+            print(f'bbox none for {fname} (???)')
         else:
             left, upper, right, lower = bbox
             # if we selected less than 80% of the original
             # height, just crop the square
             if right - left < 0.8 * h or lower - upper < 0.8 * h:
-                print('bbox too small for {}'.format(fname))
+                print(f'bbox too small for {fname}')
                 bbox = None
     else:
         bbox = None
