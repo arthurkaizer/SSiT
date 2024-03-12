@@ -18,6 +18,7 @@ parser.add_argument('--output-folder', type=str, help='path to output folder')
 parser.add_argument('--crop-size', type=int, default=512, help='crop size of image')
 parser.add_argument('-n', '--num-processes', type=int, default=8, help='number of processes to use')
 parser.add_argument('--resume', action='store_true', help='resume processing from last checkpoint')
+parser.add_argument('--processed-jobs-file', type=str, default='processed_jobs.txt', help='path to processed jobs file')
 
 
 def main():
@@ -41,7 +42,7 @@ def main():
     # Check if resume flag is set
     if args.resume:
         processed_jobs = set()
-        with open('processed_jobs.txt', 'r') as f:
+        with open(args.processed_jobs_file, 'r') as f:
             for line in f:
                 processed_jobs.add(line.strip())
 
@@ -51,9 +52,9 @@ def main():
     job_size = len(jobs) // args.num_processes
     for i in range(args.num_processes):
         if i < args.num_processes - 1:
-            procs.append(Process(target=convert_list, args=(i, jobs[i * job_size:(i + 1) * job_size])))
+            procs.append(Process(target=convert_list, args=(i, jobs[i * job_size:(i + 1) * job_size], args.processed_jobs_file)))
         else:
-            procs.append(Process(target=convert_list, args=(i, jobs[i * job_size:])))
+            procs.append(Process(target=convert_list, args=(i, jobs[i * job_size:], args.processed_jobs_file)))
 
     for p in procs:
         p.start()
@@ -64,13 +65,13 @@ def main():
     print("Processamento concluído!")
 
 
-def convert_list(i, jobs):
+def convert_list(i, jobs, processed_jobs_file):
     for j, job in enumerate(jobs):
         if j % 100 == 0:
             print(f'worker{i} has finished {j}.')
 
         convert(*job)
-        with open('processed_jobs.txt', 'a') as f:
+        with open(processed_jobs_file, 'a') as f:
             f.write(f"{job[0].name}\n")
 
 
